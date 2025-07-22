@@ -1,8 +1,6 @@
-
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Author, Book, Product
+from .models import Author, Book#, Product
 from django.db.models import Count
 
 class OrmTestView(APIView):
@@ -33,60 +31,59 @@ class OrmTestView(APIView):
         )
         output["update_or_create"] = {"book": book2.title, "created": created}
 
-        # # BULK_CREATE
-        # books = Book.objects.bulk_create([
-        #     Book(title="Bulk 1", author=author2),
-        #     Book(title="Bulk 2", author=author2),
-        # ])
-        # output["bulk_create"] = [b.title for b in books]
+        # BULK_CREATE
+        books = Book.objects.bulk_create([
+            Book(title="Bulk 1", author=author2),
+            Book(title="Bulk 2", author=author2),
+        ])
+        output["bulk_create"] = [b.title for b in books]
 
-        # # BULK_UPDATE
-        # for b in books:
-        #     b.title += "++"
-        # Book.objects.bulk_update(books, ['title'])
-        # output["bulk_update"] = [b.title for b in books]
+        # BULK_UPDATE
+        for b in books:
+            b.title += "++"
+        Book.objects.bulk_update(books, ['title'])
+        output["bulk_update"] = [b.title for b in books]
 
-        # # COUNT
-        # output["count"] = Book.objects.count()
+        # COUNT
+        output["count"] = Book.objects.count()
 
-        # # IN_BULK
-        # ids = Book.objects.values_list('id', flat=True)
-        # output["in_bulk"] = {str(k): v.title for k, v in Book.objects.in_bulk(ids).items()}
+        # IN_BULK
+        ids = Book.objects.values_list('id', flat=True)
+        output["in_bulk"] = {str(k): v.title for k, v in Book.objects.in_bulk(ids).items()}
 
-        # # ITERATOR
-        # output["iterator"] = [b.title for b in Book.objects.iterator()]
+        # ITERATOR
+        output["iterator"] = [b.title for b in Book.objects.iterator()]
 
-        # # LATEST / EARLIEST
-        # try:
-        #     output["latest"] = Book.objects.latest('id').title
-        #     output["earliest"] = Book.objects.earliest('id').title
-        # except Book.DoesNotExist:
-        #     output["latest"] = output["earliest"] = "No books"
+        # LATEST / EARLIEST
+        try:
+            output["latest"] = Book.objects.latest('id').title
+            output["earliest"] = Book.objects.earliest('id').title
+        except Book.DoesNotExist:
+            output["latest"] = output["earliest"] = "No books"
 
-        # # FIRST / LAST
-        # output["first"] = Book.objects.first().title if Book.objects.first() else None
-        # output["last"] = Book.objects.last().title if Book.objects.last() else None
+        # FIRST / LAST
+        output["first"] = Book.objects.first().title 
+        output["last"] = Book.objects.last().title 
+        # AGGREGATE
+        output["aggregate"] = Book.objects.aggregate(total_books=Count('id'))
 
-        # # AGGREGATE
-        # output["aggregate"] = Book.objects.aggregate(total_books=Count('id'))
+        # EXISTS
+        output["exists"] = Book.objects.exists()
 
-        # # EXISTS
-        # output["exists"] = Book.objects.exists()
+        # UPDATE
+        Book.objects.filter(author=author2).update(title="Updated by CBV")
+        output["update"] = "Updated titles for author2"
 
-        # # UPDATE
-        # Book.objects.filter(author=author2).update(title="Updated by CBV")
-        # output["update"] = "Updated titles for author2"
-
-        # # DELETE
-        # Book.objects.filter(title__icontains="Bulk").delete()
-        # output["delete"] = "Deleted bulk books"
+        # DELETE
+        Book.objects.filter(title__icontains="Bulk").delete()
+        output["delete"] = "Deleted bulk books"
 
         # # AS_MANAGER
         # # Already implemented in Product model
         # active_products = Product.active_objects.all()
         # output["as_manager"] = [p.name for p in active_products]
 
-        # # EXPLAIN
-        # output["explain"] = Book.objects.filter(author=author).explain()
+        # EXPLAIN
+        output["explain"] = Book.objects.filter(author=author).explain()
 
         return Response(output)
